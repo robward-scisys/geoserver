@@ -927,7 +927,14 @@ public class ImporterDataTest extends ImporterTestSupport {
                         });
         assertEquals(ImportTask.State.READY, task.getState());
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals("Shapefile", task.getData().getFormat().getName());
+
+        boolean foundShapeFile = false;
+        for (DataFormat format : task.getData().getFormat()) {
+            if (format.getName().equals("Shapefile")) {
+                foundShapeFile = true;
+            }
+        }
+        assertTrue(foundShapeFile);
 
         task =
                 Iterables.find(
@@ -941,7 +948,13 @@ public class ImporterDataTest extends ImporterTestSupport {
         assertEquals(ImportTask.State.READY, task.getState());
 
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals("Shapefile", task.getData().getFormat().getName());
+        foundShapeFile = false;
+        for (DataFormat format : task.getData().getFormat()) {
+            if (format.getName().equals("Shapefile")) {
+                foundShapeFile = true;
+            }
+        }
+        assertTrue(foundShapeFile);
 
         task =
                 Iterables.find(
@@ -955,7 +968,14 @@ public class ImporterDataTest extends ImporterTestSupport {
                         });
         assertEquals(ImportTask.State.BAD_FORMAT, task.getState());
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals("GeoTIFF", task.getData().getFormat().getName());
+
+        boolean foundGeoTIFF = false;
+        for (DataFormat format : task.getData().getFormat()) {
+            if (format.getName().equals("GeoTIFF")) {
+                foundGeoTIFF = true;
+            }
+        }
+        assertTrue(foundGeoTIFF);
     }
 
     @Test
@@ -973,19 +993,37 @@ public class ImporterDataTest extends ImporterTestSupport {
         assertEquals(ImportTask.State.READY, task.getState());
         assertEquals("archsites", task.getLayer().getResource().getName());
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals("Shapefile", task.getData().getFormat().getName());
+        boolean foundShapeFile = false;
+        for (DataFormat format : task.getData().getFormat()) {
+            if (format.getName().equals("Shapefile")) {
+                foundShapeFile = true;
+            }
+        }
+        assertTrue(foundShapeFile);
 
         task = context.getTasks().get(1);
         assertEquals(ImportTask.State.READY, task.getState());
         assertEquals("bugsites", task.getLayer().getResource().getName());
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals("Shapefile", task.getData().getFormat().getName());
+        foundShapeFile = false;
+        for (DataFormat format : task.getData().getFormat()) {
+            if (format.getName().equals("Shapefile")) {
+                foundShapeFile = true;
+            }
+        }
+        assertTrue(foundShapeFile);
 
         task = context.getTasks().get(2);
         assertEquals(ImportTask.State.READY, task.getState());
         assertEquals("EmissiveCampania", task.getLayer().getResource().getName());
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals("GeoTIFF", task.getData().getFormat().getName());
+        boolean foundGeoTIFF = false;
+        for (DataFormat format : task.getData().getFormat()) {
+            if (format.getName().equals("GeoTIFF")) {
+                foundGeoTIFF = true;
+            }
+        }
+        assertTrue(foundGeoTIFF);
     }
 
     @Test

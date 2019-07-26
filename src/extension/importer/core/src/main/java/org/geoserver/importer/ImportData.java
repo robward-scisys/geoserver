@@ -7,6 +7,8 @@ package org.geoserver.importer;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import org.geoserver.importer.job.ProgressMonitor;
 
 /**
@@ -20,7 +22,7 @@ public abstract class ImportData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** the format for this data */
-    DataFormat format;
+    List<DataFormat> format;
 
     Object parent; // either the task or inputcontext - that owns this data
     String charsetEncoding;
@@ -43,11 +45,16 @@ public abstract class ImportData implements Serializable {
         this.charsetEncoding = charsetEncoding;
     }
 
-    public DataFormat getFormat() {
+    public List<DataFormat> getFormat() {
         return format;
     }
 
     public void setFormat(DataFormat format) {
+        this.format = new ArrayList<DataFormat>();
+        this.format.add(format);
+    }
+
+    public void setFormat(List<DataFormat> format) {
         this.format = format;
     }
 

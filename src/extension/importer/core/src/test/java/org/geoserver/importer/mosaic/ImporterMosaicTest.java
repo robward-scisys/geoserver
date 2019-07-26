@@ -58,7 +58,8 @@ public class ImporterMosaicTest extends ImporterTestSupport {
 
         ImportTask task = context.getTasks().get(0);
         assertTrue(task.getData() instanceof Mosaic);
-        assertTrue(task.getData().getFormat() instanceof MosaicFormat);
+        assertNotNull(task.getData().getFormat());
+        assertTrue(task.getData().getFormat().get(0) instanceof MosaicFormat);
 
         importer.run(context);
 

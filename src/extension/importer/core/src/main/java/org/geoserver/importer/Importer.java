@@ -518,13 +518,20 @@ public class Importer implements DisposableBean, ApplicationListener {
             // group the contents of the directory by format
             Map<DataFormat, List<FileData>> map = new HashMap<DataFormat, List<FileData>>();
             for (FileData f : dir.getFiles()) {
-                DataFormat format = f.getFormat();
-                List<FileData> files = map.get(format);
-                if (files == null) {
-                    files = new ArrayList<FileData>();
-                    map.put(format, files);
+                List<DataFormat> formatList = f.getFormat();
+                if (formatList == null) {
+                    formatList = new ArrayList<DataFormat>();
+                    formatList.add(null);
                 }
-                files.add(f);
+
+                for (DataFormat format : formatList) {
+                    List<FileData> files = map.get(format);
+                    if (files == null) {
+                        files = new ArrayList<FileData>();
+                        map.put(format, files);
+                    }
+                    files.add(f);
+                }
             }
 
             // handle case of importing a single file that we don't know the format of, in this
@@ -557,13 +564,27 @@ public class Importer implements DisposableBean, ApplicationListener {
                 for (List<FileData> files : map.values()) {
                     for (FileData file : files) {
                         // tasks.add(createTask(file, context, null));
-                        tasks.addAll(createTasks(file, file.getFormat(), context, skipNoFormat));
+                        List<DataFormat> formatList = file.getFormat();
+                        if (formatList == null) {
+                            formatList = new ArrayList<DataFormat>();
+                            formatList.add(null);
+                        }
+                        for (DataFormat format : formatList) {
+                            tasks.addAll(createTasks(file, format, context, skipNoFormat));
+                        }
                     }
                 }
 
             } else {
                 for (FileData file : dir.getFiles()) {
-                    tasks.addAll(createTasks(file, file.getFormat(), context, skipNoFormat));
+                    List<DataFormat> formatList = file.getFormat();
+                    if (formatList == null) {
+                        formatList = new ArrayList<DataFormat>();
+                        formatList.add(null);
+                    }
+                    for (DataFormat format : formatList) {
+                        tasks.addAll(createTasks(file, format, context, skipNoFormat));
+                    }
                 }
             }
         }
@@ -585,7 +606,13 @@ public class Importer implements DisposableBean, ApplicationListener {
     }
 
     List<ImportTask> createTasks(ImportData data, ImportContext context) throws IOException {
-        return createTasks(data, data.getFormat(), context);
+        List<ImportTask> taskList = new ArrayList<ImportTask>();
+
+        for (DataFormat format : data.getFormat()) {
+            taskList.addAll(createTasks(data, format, context));
+        }
+
+        return taskList;
     }
 
     List<ImportTask> createTasks(ImportData data, DataFormat format, ImportContext context)
@@ -722,8 +749,8 @@ public class Importer implements DisposableBean, ApplicationListener {
         }
 
         // check the format
-        DataFormat format = task.getData().getFormat();
-        if (format == null) {
+        List<DataFormat> formatList = task.getData().getFormat();
+        if ((formatList == null) || formatList.isEmpty()) {
             task.setState(State.NO_FORMAT);
             return false;
         }
@@ -736,7 +763,15 @@ public class Importer implements DisposableBean, ApplicationListener {
         }
 
         // check for a mismatch between store and format
-        if (!formatMatchesStore(format, task.getStore())) {
+        boolean match = false;
+        for (DataFormat format : formatList) {
+            if (formatMatchesStore(format, task.getStore())) {
+                match = true;
+                break;
+            }
+        }
+
+        if (!match) {
             String msg =
                     task.getStore() instanceof DataStoreInfo
                             ? "Unable to import raster data into vector store"
@@ -1097,64 +1132,67 @@ public class Importer implements DisposableBean, ApplicationListener {
         }
 
         boolean canceled = false;
-        DataFormat format = task.getData().getFormat();
-        if (format instanceof VectorFormat) {
-            try {
-                currentlyProcessing.put(task.getContext().getId(), task);
-                loadIntoDataStore(
-                        task,
-                        (DataStoreInfo) task.getStore(),
-                        (VectorFormat) format,
-                        (VectorTransformChain) tx);
-                canceled = task.progress().isCanceled();
+        List<DataFormat> formatList = task.getData().getFormat();
+        for (DataFormat format : formatList) {
+            if (format instanceof VectorFormat) {
+                try {
+                    currentlyProcessing.put(task.getContext().getId(), task);
+                    loadIntoDataStore(
+                            task,
+                            (DataStoreInfo) task.getStore(),
+                            (VectorFormat) format,
+                            (VectorTransformChain) tx);
+                    canceled = task.progress().isCanceled();
 
-                FeatureTypeInfo featureType = (FeatureTypeInfo) task.getLayer().getResource();
-                featureType.getAttributes().clear();
+                    FeatureTypeInfo featureType = (FeatureTypeInfo) task.getLayer().getResource();
+                    featureType.getAttributes().clear();
 
-                if (!canceled) {
-                    if (task.getUpdateMode() == UpdateMode.CREATE) {
+                    if (!canceled) {
+                        if (task.getUpdateMode() == UpdateMode.CREATE) {
+                            addToCatalog(task);
+                        }
+                        FeatureTypeInfo resource =
+                                getCatalog()
+                                        .getResourceByName(
+                                                featureType.getQualifiedName(),
+                                                FeatureTypeInfo.class);
+                        calculateBounds(resource);
+                    }
+                } catch (Throwable th) {
+                    LOGGER.log(Level.SEVERE, "Error occured during import", th);
+                    Exception e = (th instanceof Exception) ? (Exception) th : new Exception(th);
+                    task.setError(e);
+                    task.setState(ImportTask.State.ERROR);
+                    return;
+                } finally {
+                    currentlyProcessing.remove(task.getContext().getId());
+                }
+            } else {
+                // see if the store exposes a structured grid coverage reader
+                StoreInfo store = task.getStore();
+                final String errorMessage =
+                        "Indirect raster import can only work against a structured grid coverage store (e.g., mosaic), this one is not: ";
+                if (!(store instanceof CoverageStoreInfo)) {
+                    throw new IllegalArgumentException(errorMessage + store);
+                }
+
+                // this is a ResourcePool reader, we should not close it
+                CoverageStoreInfo cs = (CoverageStoreInfo) store;
+                GridCoverageReader reader = cs.getGridCoverageReader(null, null);
+
+                if (!(reader instanceof StructuredGridCoverage2DReader)) {
+                    throw new IllegalArgumentException(errorMessage + store);
+                }
+
+                StructuredGridCoverage2DReader sr = (StructuredGridCoverage2DReader) reader;
+                ImportData data = task.getData();
+                harvestImportData(sr, data);
+
+                // check we have a target resource, if not, create it
+                if (task.getUpdateMode() == UpdateMode.CREATE) {
+                    if (task.getLayer() != null && task.getLayer().getId() == null) {
                         addToCatalog(task);
                     }
-                    FeatureTypeInfo resource =
-                            getCatalog()
-                                    .getResourceByName(
-                                            featureType.getQualifiedName(), FeatureTypeInfo.class);
-                    calculateBounds(resource);
-                }
-            } catch (Throwable th) {
-                LOGGER.log(Level.SEVERE, "Error occured during import", th);
-                Exception e = (th instanceof Exception) ? (Exception) th : new Exception(th);
-                task.setError(e);
-                task.setState(ImportTask.State.ERROR);
-                return;
-            } finally {
-                currentlyProcessing.remove(task.getContext().getId());
-            }
-        } else {
-            // see if the store exposes a structured grid coverage reader
-            StoreInfo store = task.getStore();
-            final String errorMessage =
-                    "Indirect raster import can only work against a structured grid coverage store (e.g., mosaic), this one is not: ";
-            if (!(store instanceof CoverageStoreInfo)) {
-                throw new IllegalArgumentException(errorMessage + store);
-            }
-
-            // this is a ResourcePool reader, we should not close it
-            CoverageStoreInfo cs = (CoverageStoreInfo) store;
-            GridCoverageReader reader = cs.getGridCoverageReader(null, null);
-
-            if (!(reader instanceof StructuredGridCoverage2DReader)) {
-                throw new IllegalArgumentException(errorMessage + store);
-            }
-
-            StructuredGridCoverage2DReader sr = (StructuredGridCoverage2DReader) reader;
-            ImportData data = task.getData();
-            harvestImportData(sr, data);
-
-            // check we have a target resource, if not, create it
-            if (task.getUpdateMode() == UpdateMode.CREATE) {
-                if (task.getLayer() != null && task.getLayer().getId() == null) {
-                    addToCatalog(task);
                 }
             }
         }

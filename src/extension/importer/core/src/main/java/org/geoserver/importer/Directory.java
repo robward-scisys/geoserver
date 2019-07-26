@@ -191,17 +191,19 @@ public class Directory extends FileData {
                     }
 
                     // determine if this is a spatial format or not
-                    DataFormat format = DataFormat.lookup(f);
+                    List<DataFormat> formatList = DataFormat.lookup(f);
 
-                    if (format != null) {
-                        SpatialFile sf = newSpatialFile(f, format);
+                    if (formatList != null) {
+                        for (DataFormat format : formatList) {
+                            SpatialFile sf = newSpatialFile(f, format);
 
-                        // gather up the related files
-                        sf.prepare(m);
+                            // gather up the related files
+                            sf.prepare(m);
 
-                        this.files.add(sf);
+                            this.files.add(sf);
 
-                        all.removeAll(sf.allFiles());
+                            all.removeAll(sf.allFiles());
+                        }
                     }
                 }
             }
@@ -338,14 +340,14 @@ public class Directory extends FileData {
      * Returns the data format of the files in the directory iff all the files are of the same
      * format, if they are not this returns null.
      */
-    public DataFormat format() throws IOException {
+    public List<DataFormat> format() throws IOException {
         if (files.isEmpty()) {
             LOGGER.warning("no files recognized");
             return null;
         }
 
         FileData file = files.get(0);
-        DataFormat format = file.getFormat();
+        List<DataFormat> format = file.getFormat();
         for (int i = 1; i < files.size(); i++) {
             FileData other = files.get(i);
             if (format != null && !format.equals(other.getFormat())) {

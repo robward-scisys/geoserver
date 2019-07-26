@@ -32,6 +32,7 @@ import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.data.Query;
 import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.geopkg.GeoPkgDataStoreFactory;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
@@ -251,6 +252,23 @@ public class DataStoreFormat extends VectorFormat {
             if (db != null) {
                 return db.getParameters();
             }
+
+            File f = null;
+            if (data instanceof SpatialFile) {
+                f = ((SpatialFile) data).getFile();
+            }
+
+            if ((f != null) && (catalog == null)) {
+                // GeoPackage vector layer connection parameters
+                Map<String, Serializable> map = new HashMap<String, Serializable>();
+                map.put(GeoPkgDataStoreFactory.DATABASE.key, f.getAbsolutePath());
+                map.put(
+                        GeoPkgDataStoreFactory.DBTYPE.key,
+                        (String) GeoPkgDataStoreFactory.DBTYPE.sample);
+                map.put(GeoPkgDataStoreFactory.READ_ONLY.key, Boolean.TRUE.toString());
+
+                return map;
+            }
         }
 
         // try non-jdbc db
@@ -273,8 +291,7 @@ public class DataStoreFormat extends VectorFormat {
             synchronized (this) {
                 if (dataStoreFactory == null) {
                     try {
-                        dataStoreFactory =
-                                dataStoreFactoryClass.getDeclaredConstructor().newInstance();
+                        dataStoreFactory = dataStoreFactoryClass.newInstance();
                     } catch (Exception e) {
                         throw new RuntimeException(
                                 "Unable to create instance of: "

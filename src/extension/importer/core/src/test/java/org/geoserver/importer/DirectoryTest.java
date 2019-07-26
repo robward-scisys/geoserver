@@ -6,7 +6,6 @@
 package org.geoserver.importer;
 
 import static org.geoserver.importer.ImporterTestUtils.unpack;
-import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -38,7 +37,14 @@ public class DirectoryTest extends TestCase {
 
         assertEquals(4, m.getFiles().size());
         for (int i = 0; i < m.getFiles().size(); i++) {
-            assertEquals("GeoTIFF", m.getFiles().get(1).getFormat().getName());
+
+            boolean foundGeoTIFF = false;
+            for (DataFormat format : m.getFiles().get(1).getFormat()) {
+                if (format.getName().equals("GeoTIFF")) {
+                    foundGeoTIFF = true;
+                }
+            }
+            assertTrue(foundGeoTIFF);
         }
         // make sure the junk was actually picked up
         for (FileData f : m.getFiles()) {
@@ -86,10 +92,12 @@ public class DirectoryTest extends TestCase {
         d.prepare();
 
         assertNotNull(d.getFormat());
-        assertEquals(DataStoreFormat.class, d.getFormat().getClass());
+        assertEquals(1, d.getFormat().size());
+        assertEquals(DataStoreFormat.class, d.getFormat().get(0).getClass());
         List<FileData> files = d.getFiles();
         assertEquals(1, files.size());
-        assertEquals(DataStoreFormat.class, files.get(0).getFormat().getClass());
+        assertEquals(1, files.get(0).getFormat().size());
+        assertEquals(DataStoreFormat.class, files.get(0).getFormat().get(0).getClass());
     }
 
     public void testShapefileWithExtraFiles() throws Exception {
@@ -105,10 +113,12 @@ public class DirectoryTest extends TestCase {
         d.prepare();
 
         assertNotNull(d.getFormat());
-        assertEquals(DataStoreFormat.class, d.getFormat().getClass());
+        assertEquals(1, d.getFormat().size());
+        assertEquals(DataStoreFormat.class, d.getFormat().get(0).getClass());
         List<FileData> files = d.getFiles();
         assertEquals(1, files.size());
-        assertEquals(DataStoreFormat.class, files.get(0).getFormat().getClass());
+        assertEquals(1, files.get(0).getFormat().size());
+        assertEquals(DataStoreFormat.class, files.get(0).getFormat().get(0).getClass());
     }
 
     public void testMultipleSpatialFile() throws Exception {

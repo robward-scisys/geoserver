@@ -363,8 +363,10 @@ public class ImportTaskControllerTest extends ImporterTestSupport {
         ImportData importData = task.getData();
         assertTrue(importData instanceof SpatialFile);
 
-        DataFormat format = importData.getFormat();
-        assertTrue(format instanceof GridFormat);
+        List<DataFormat> format = importData.getFormat();
+        assertNotNull(format);
+        assertEquals(1, format.size());
+        assertTrue(format.get(0) instanceof GridFormat);
 
         return context;
     }

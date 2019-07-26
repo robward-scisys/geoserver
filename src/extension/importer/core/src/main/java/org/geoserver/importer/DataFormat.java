@@ -8,6 +8,7 @@ package org.geoserver.importer;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,12 +44,14 @@ public abstract class DataFormat implements Serializable {
     static Logger LOG = Logging.getLogger(DataFormat.class);
 
     /** looks up a format based on file extension. */
-    public static DataFormat lookup(File file) {
+    public static List<DataFormat> lookup(File file) {
+        List<DataFormat> supportedFormats = new ArrayList<DataFormat>();
+
         FileData fileData = new FileData(file);
         for (DataFormat df : GeoServerExtensions.extensions(DataFormat.class)) {
             try {
                 if (df.canRead(fileData)) {
-                    return df;
+                    supportedFormats.add(df);
                 }
             } catch (IOException e) {
                 LOG.log(
@@ -64,7 +67,7 @@ public abstract class DataFormat implements Serializable {
         String ext = FilenameUtils.getExtension(file.getName());
         FileDataStoreFactorySpi factory = FileDataStoreFinder.getDataStoreFactory(ext);
         if (factory != null) {
-            return new DataStoreFormat(factory);
+            supportedFormats.add(new DataStoreFormat(factory));
         }
 
         // look for a gridformat that can handle the file
@@ -89,17 +92,22 @@ public abstract class DataFormat implements Serializable {
             format = formats.iterator().next();
         }
         if (format != null && !(format instanceof UnknownFormat)) {
-            return new GridFormat(format);
+            supportedFormats.add(new GridFormat(format));
         }
 
-        return null;
+        if (supportedFormats.isEmpty()) {
+            supportedFormats = null;
+        }
+        return supportedFormats;
     }
 
     /** Looks up a format based on a set of connection parameters. */
-    public static DataFormat lookup(Map<String, Serializable> params) {
+    public static List<DataFormat> lookup(Map<String, Serializable> params) {
         DataStoreFactorySpi factory = (DataStoreFactorySpi) DataStoreUtils.aquireFactory(params);
         if (factory != null) {
-            return new DataStoreFormat(factory);
+            List<DataFormat> supportedFormats = new ArrayList<DataFormat>();
+            supportedFormats.add(new DataStoreFormat(factory));
+            return supportedFormats;
         }
         return null;
     }

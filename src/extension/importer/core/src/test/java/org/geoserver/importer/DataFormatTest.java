@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
@@ -16,8 +17,10 @@ public class DataFormatTest extends ImporterTestSupport {
 
     @Test
     public void testLookupShapefile() throws Exception {
-        DataFormat format = DataFormat.lookup(new File(tmpDir(), "foo.shp"));
-        assertNotNull("No format found for shape files", format);
+        List<DataFormat> formatList = DataFormat.lookup(new File(tmpDir(), "foo.shp"));
+        assertNotNull("No format found for shape files", formatList);
+        assertEquals(1, formatList.size());
+        DataFormat format = formatList.get(0);
         String name = format.getName();
         assertEquals("Shapefile format not found", "Shapefile", name);
     }
@@ -26,16 +29,20 @@ public class DataFormatTest extends ImporterTestSupport {
     public void testLookupTiff() throws Exception {
         File dir = unpack("geotiff/EmissiveCampania.tif.bz2");
         File tif = new File(dir, "EmissiveCampania.tif");
-        DataFormat format = DataFormat.lookup(tif);
-        assertNotNull("No format found for tif", format);
+        List<DataFormat> formatList = DataFormat.lookup(tif);
+        assertNotNull("No format found for tif", formatList);
+        assertEquals(1, formatList.size());
+        DataFormat format = formatList.get(0);
         String name = format.getName();
         assertEquals("Tif format not found", "GeoTIFF", name);
     }
 
     @Test
     public void testLookupCSV() throws Exception {
-        DataFormat format = DataFormat.lookup(new File(tmpDir(), "foo.csv"));
-        assertNotNull("No format found for csv files", format);
+        List<DataFormat> formatList = DataFormat.lookup(new File(tmpDir(), "foo.csv"));
+        assertNotNull("No format found for csv files", formatList);
+        assertEquals(1, formatList.size());
+        DataFormat format = formatList.get(0);
         String name = format.getName();
         assertEquals("CSV format not found", "CSV", name);
     }
@@ -45,8 +52,10 @@ public class DataFormatTest extends ImporterTestSupport {
         File kmlFile = new File(tmpDir(), "foo.kml");
         FileUtils.touch(kmlFile);
 
-        DataFormat format = DataFormat.lookup(kmlFile);
-        assertNotNull("No format found for kml files", format);
+        List<DataFormat> formatList = DataFormat.lookup(kmlFile);
+        assertNotNull("No format found for kml files", formatList);
+        assertEquals(1, formatList.size());
+        DataFormat format = formatList.get(0);
         String name = format.getName();
         assertEquals("KML format not found", "KML", name);
     }

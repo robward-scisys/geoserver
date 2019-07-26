@@ -590,7 +590,8 @@ public class ImportJSONWriter {
         json.object();
 
         json.key("type").value("file");
-        json.key("format").value(data.getFormat() != null ? data.getFormat().getName() : null);
+        json.key("format")
+                .value(data.getFormat() != null ? data.getFormat().get(0).getName() : null);
         if (href) {
             json.key("href").value(RequestInfo.get().servletURI(pathTo(data, parent)));
         }
@@ -661,7 +662,7 @@ public class ImportJSONWriter {
         json.object();
         json.key("type").value(typeName);
         if (data.getFormat() != null) {
-            json.key("format").value(data.getFormat().getName());
+            json.key("format").value(data.getFormat().get(0).getName());
         }
 
         json.key("location").value(data.getFile().getPath());
@@ -704,7 +705,8 @@ public class ImportJSONWriter {
             throws IOException {
         json.object();
         json.key("type").value("database");
-        json.key("format").value(data.getFormat() != null ? data.getFormat().getName() : null);
+        json.key("format")
+                .value(data.getFormat() != null ? data.getFormat().get(0).getName() : null);
         json.key("href").value(RequestInfo.get().servletURI(pathTo(data, parent)));
 
         if (expand > 0) {
@@ -732,7 +734,8 @@ public class ImportJSONWriter {
         json.object();
         json.key("type").value("table");
         json.key("name").value(data.getName());
-        json.key("format").value(data.getFormat() != null ? data.getFormat().getName() : null);
+        json.key("format")
+                .value(data.getFormat() != null ? data.getFormat().get(0).getName() : null);
         json.key("href").value(RequestInfo.get().servletURI(pathTo(data, parent)));
         json.endObject();
     }

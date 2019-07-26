@@ -10,6 +10,7 @@ import com.google.common.collect.Collections2;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FilenameUtils;
@@ -79,12 +80,21 @@ public class Mosaic extends Directory {
                         }));
 
         if (!files.isEmpty()) {
-            DataFormat format = format();
-            if (format == null) {
+            List<DataFormat> formatList = format();
+            if (formatList == null) {
                 throw new IllegalArgumentException("Unable to determine format for mosaic files");
             }
 
-            if (!(format instanceof RasterFormat)) {
+            boolean foundRaster = false;
+
+            for (DataFormat format : formatList) {
+                if (format instanceof RasterFormat) {
+                    foundRaster = true;
+                    break;
+                }
+            }
+
+            if (!foundRaster) {
                 throw new IllegalArgumentException(
                         "Mosaic directory must contain only raster files");
             }

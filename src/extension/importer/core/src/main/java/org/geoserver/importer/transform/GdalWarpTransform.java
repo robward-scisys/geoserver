@@ -56,21 +56,24 @@ public class GdalWarpTransform extends AbstractCommandLinePreTransform implement
             return;
         }
 
-        DataFormat format = DataFormat.lookup(((FileData) data).getFile());
-        List<ImportTask> tasks = format.list(data, resource.getCatalog(), new ProgressMonitor());
-        if (tasks == null || tasks.isEmpty()) {
-            return;
-        }
-        LayerInfo updatedLayer = tasks.get(0).getLayer();
-        ResourceInfo updatedResource = updatedLayer.getResource();
-        String updatedSRS = updatedResource.getSRS();
-        // check if the layer srs is incompatible with the one we just reprojected to, update if
-        // necessary
-        if (originalSRS == null || (!originalSRS.equals(updatedSRS) && updatedSRS != null)) {
-            resource.setSRS(updatedSRS);
-            resource.setNativeCRS(updatedResource.getNativeCRS());
-            resource.setNativeBoundingBox(updatedResource.getNativeBoundingBox());
-            resource.setLatLonBoundingBox(updatedResource.getLatLonBoundingBox());
+        List<DataFormat> formatList = DataFormat.lookup(((FileData) data).getFile());
+        for (DataFormat format : formatList) {
+            List<ImportTask> tasks =
+                    format.list(data, resource.getCatalog(), new ProgressMonitor());
+            if (tasks == null || tasks.isEmpty()) {
+                return;
+            }
+            LayerInfo updatedLayer = tasks.get(0).getLayer();
+            ResourceInfo updatedResource = updatedLayer.getResource();
+            String updatedSRS = updatedResource.getSRS();
+            // check if the layer srs is incompatible with the one we just reprojected to, update if
+            // necessary
+            if (originalSRS == null || (!originalSRS.equals(updatedSRS) && updatedSRS != null)) {
+                resource.setSRS(updatedSRS);
+                resource.setNativeCRS(updatedResource.getNativeCRS());
+                resource.setNativeBoundingBox(updatedResource.getNativeBoundingBox());
+                resource.setLatLonBoundingBox(updatedResource.getLatLonBoundingBox());
+            }
         }
     }
 
