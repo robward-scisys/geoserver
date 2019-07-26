@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.geoserver.api.NCNameResourceCodec;
 import org.geoserver.wfs.WFSInfo;
 import org.hamcrest.CoreMatchers;
 import org.junit.Ignore;

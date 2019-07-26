@@ -1,8 +1,8 @@
 <#include "common-header.ftl">
    <div id="content">
-       <h2>${service.title!"GeoServer WFS 3 Service"}</h2>
+       <h2>${service.title!"GeoServer Features 1.0 Service"}</h2>
        <p>${service.abstract!""}<br/>
-       This is the landing page of the WFS 3 service, providing links to the service API and its contents.
+       This is the landing page of the Features 1.0 service, providing links to the service API and its contents.
        <br/> 
        This document is also available as
        <#list model.getLinksExcept("landingPage", "text/html") as link><a href="${link.href}">${link.type}</a><#if link_has_next>, </#if></#list>.

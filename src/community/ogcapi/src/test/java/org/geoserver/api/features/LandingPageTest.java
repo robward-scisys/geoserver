@@ -1,8 +1,6 @@
-/*
- *  (c) 2019 Open Source Geospatial Foundation - all rights reserved
- *  This code is licensed under the GPL 2.0 license, available at the root
- *  application directory.
- *
+/* (c) 2019 Open Source Geospatial Foundation - all rights reserved
+ * This code is licensed under the GPL 2.0 license, available at the root
+ * application directory.
  */
 package org.geoserver.api.features;
 
@@ -139,7 +137,7 @@ public class LandingPageTest extends FeaturesTestSupport {
                 "data",
                 "data");
         // check title
-        assertEquals("WFS 3.0 server", json.read("title"));
+        assertEquals("Features 1.0 server", json.read("title"));
         // check description
         assertEquals("", json.read("description"));
     }
